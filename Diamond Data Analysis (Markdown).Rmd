@@ -1,0 +1,317 @@
+---
+title: "Diamond Data Analysis Project"
+author: "Sashant Bhagat"
+date: "2026-05-25"
+output: html_document
+---
+
+# Introduction
+
+This project performs:
+
+- Data Understanding
+- Data Cleaning
+- Exploratory Data Analysis (EDA)
+- Statistical Analysis
+
+using the `diamonds` dataset from the `ggplot2` package.
+
+# Load Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(skimr)
+library(janitor)
+
+data("diamonds")
+```
+
+# Data Understanding
+
+## Meaning of Dataset Variables
+- price - Diamond price
+- carat - Weight of diamond
+- cut - Quality of cut
+- color - Diamond color grade
+- clarity - Clarity quality
+- depth - Total depth percentage
+- table - Width of top of diamond
+- x,y,z - Dimensions
+
+## Preview Dataset
+
+```{r}
+head(diamonds)
+```
+
+## Structure of Dataset
+
+```{r}
+str(diamonds)
+```
+
+## Summary Statistics
+
+```{r}
+summary(diamonds)
+```
+
+## Glimpse of Dataset
+
+```{r}
+glimpse(diamonds)
+```
+
+## Detailed Data Summary
+
+```{r}
+skim(diamonds)
+```
+
+
+# Data Cleaning
+
+## Check Missing Values
+
+```{r}
+colSums(is.na(diamonds))
+```
+
+## Check Duplicate Rows
+
+```{r}
+sum(duplicated(diamonds))
+```
+
+## Remove Duplicate Rows
+
+```{r}
+diamonds_unique <- unique(diamonds)
+
+sum(duplicated(diamonds_unique))
+```
+
+## Check Invalid Dimension Values
+
+```{r}
+diamonds_unique %>%
+  filter(x == 0 | y == 0 | z == 0)
+```
+
+## Remove Invalid Values
+
+```{r}
+diamonds_clean <- diamonds_unique %>%
+  filter(x > 0, y > 0, z > 0)
+
+summary(diamonds_clean)
+```
+
+
+# Exploratory Data Analysis (EDA)
+
+## 1. Distribution of Diamond Prices
+
+Que1 - What factors affect diamond price?
+
+```{r}
+ggplot(diamonds_clean, aes(x = price)) +
+  geom_histogram(bins = 50, fill = "steelblue") +
+  labs(
+    title = "Distribution of Diamond Prices",
+    x = "Price",
+    y = "Frequency"
+  )
+```
+
+### Key Insights:
+- The distribution is **right-skewed**, meaning most diamonds are lower-priced, while only a few diamonds are extremely expensive.
+- Most diamonds are concentrated in the lower price range, showing that **premium-quality diamonds are relatively rare.**
+- The presence of very high-priced diamonds suggests that features like **larger carat size, better cut, clarity, and color quality** increase price significantly.
+
+## 2. Relationship Between Carat and Price
+
+Que2 - Does carat strongly influence price?
+
+```{r}
+ggplot(diamonds_clean, aes(x = carat, y = price)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "red") +
+  labs(
+    title = "Relationship Between Carat and Price",
+    x = "Carat (Size)",
+    y = "Price (USD)"
+  )
+```
+
+### Key Insights:
+- The scatter plot shows **a strong positive relationship** between carat and price.
+- As carat size increases, diamond price generally increases significantly.
+- The upward trend line confirms that **larger diamonds tend to be more expensive.**
+- **Carat** appears to be one of the most influential factors in determining diamond price.
+
+## 3. Average Price by Cut
+
+Que3 - Which cut category has highest average price?
+
+```{r}
+diamonds_clean %>%
+  group_by(cut) %>%
+  summarise(avg_price = mean(price)) %>%
+  ggplot(aes(x = cut, y = avg_price, fill = cut)) +
+  geom_col() +
+  labs(
+    title = "Average Diamond Price by Cut",
+    x = "Cut",
+    y = "Average Price (USD)"
+  )
+```
+
+### Key Insights:
+- The **Premium** cut category has the **highest average diamond price** among all cut types.
+- **Fair** cut diamonds also show relatively high average prices, possibly due to larger carat sizes in that category.
+- **Ideal** cut diamonds have a lower average price compared to Premium and Fair cuts.
+- This suggests that **cut quality alone does not determine price**. Factors like carat, clarity, and color also strongly influence pricing.
+
+## 4. Price Distribution by Clarity
+
+Que4 - Does clarity impact pricing?
+
+```{r}
+ggplot(diamonds_clean, aes(x = clarity, y = price, fill = clarity)) +
+  geom_boxplot() +
+  labs(
+    title = "Price Distribution by Clarity",
+    x = "Clarity",
+    y = "Price (USD)"
+  )
+```
+
+### Key Insights:
+- Diamond clarity impacts pricing, but the relationship is **not perfectly linear.**
+- The wide spread and many outliers across clarity categories indicate that **price is influenced by multiple factors alongside clarity**.
+
+## 5. Average Price by Diamond Color
+
+Que5 - Which diamond color category has the highest average price?
+
+```{r}
+diamonds_clean %>%
+  group_by(color) %>%
+  summarise(avg_price = mean(price)) %>%
+  ggplot(aes(x = color, y = avg_price, fill = color)) +
+  geom_col() +
+  labs(
+    title = "Average Diamond Price by Color",
+    x = "Diamond Color",
+    y = "Average Price (USD)"
+  )
+```
+
+### Key Insights:
+- The **J color** category has the **highest average** diamond price among all color grades.
+- Average price generally increases from **D to J color categories** in this dataset.
+- Lower color grades (such as I and J) having higher prices suggests that these diamonds may also have **larger carat sizes**, increasing their overall value.
+
+
+# Statistical Analysis
+
+```{r}
+options(scipen = 999)
+```
+
+**Note:** This function forces R to show standard decimal numbers by turning off scientific notation.
+
+## 1. Correlation Test Between Carat and Price
+
+Que - Is there a strong relationship between carat and price?
+
+H0: No linear relationship between Carat and Price
+H1: Relationship exists 
+
+```{r}
+cor.test(
+  diamonds_clean$carat,
+  diamonds_clean$price
+)
+```
+
+### Interpretation: 
+The correlation coefficient is: r = 0.9215
+
+This indicates a **very strong positive correlation** between carat and price.
+(Larger diamonds tend to be much more expensive.)
+
+- As the carat size increases, the price of diamonds also increases significantly.
+- The p-value is extremely small (p < 0.00000000000000022), meaning the relationship is **statistically significant.**
+- Since the p-value is far below 0.05 (significance level), we **reject the null hypothesis** and conclude that carat and price are significantly related.
+- The 95% confidence interval (0.9203 to 0.9228) confirms that the true correlation is consistently very strong.
+
+## 2. Chi-Square Test of Independence Between Cut and Color
+
+Que - Is there a significant relationship between two categorical variables - Cut and Color?
+
+H0: Variables are Independent (No relationship)
+H1: Variables are Dependent (Significant Relationship)
+
+```{r}
+chisq.test(
+  diamonds_clean$cut,
+  diamonds_clean$color
+)
+```
+
+### Interpretation:
+- The p-value is extremely small (p < 0.00000000000000022), which is far below 0.05.
+- Therefore, we reject the null hypothesis of independence.
+- This means there is a statistically significant relationship between diamond cut and color.
+
+- Degree of Freedom (df):
+  [Color = 7 Categories, Cut = 5 Categories]
+  therefore, df = (7-1) x (5-1)
+              = 6 x 4
+              = 24
+
+## 3. One-Way ANOVA for Price Differences Across Cut Categories
+
+Que - Do different cut categories have significantly different prices?
+
+H0: The mean diamond prices are equal across all cut categories.
+H1: At least one cut category has a different mean diamond price.
+
+```{r}
+anova_model <- aov(
+  price ~ cut,
+  data = diamonds_clean
+)
+
+summary(anova_model)
+```
+
+### Interpretation:
+This is a One-Way ANOVA (Analysis of Variance) test.
+
+Independent Variable: **Cut**
+Dependent Variable: **Price**
+
+The test compares the mean prices across different cut categories.
+
+- The p-value is extremely small (p < 0.0000000000000002), which is far below 0.05.
+- Therefore, we **reject the null hypothesis** that all cut categories have the same average price.
+- This means there are significant differences in average diamond prices across cut categories.
+- The high **F-value (171.9)** indicates that variation in price between cut groups is much larger than variation within groups.
+
+
+# Conclusion
+
+This project explored the diamonds dataset through:
+
+- Data cleaning and validation
+- Exploratory visualizations
+- Statistical testing
+
+The analysis helped identify relationships between:
+- Carat and price
+- Cut and price
+- Color and price
+- Cut and color
